@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Service Desk — Тренажёр</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: #f5f6f8; color: #1a1a1a; height: 100vh; overflow: hidden; }
+
+.case-banner { background: linear-gradient(135deg, #4f5bd5, #6772e5); color: #fff; padding: 18px 28px; display: flex; gap: 18px; align-items: flex-start; box-shadow: 0 2px 12px rgba(79,91,213,0.25); position: relative; z-index: 200; }
+.case-banner .case-icon { font-size: 28px; flex-shrink: 0; line-height: 1; background: rgba(255,255,255,0.15); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.case-banner .case-content { flex: 1; }
+.case-banner .case-label { display: inline-block; background: #ffd166; color: #4a3d00; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; margin-bottom: 8px; }
+.case-banner .case-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+.case-banner .case-text { font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.92); margin-bottom: 6px; }
+.case-banner .case-text strong { color: #ffd166; font-weight: 700; }
+.case-banner .case-task { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.15); border-radius: 8px; font-size: 14px; line-height: 1.5; }
+.case-banner .case-task strong { color: #fff; }
+
+.topbar { height: 52px; background: #fff; display: flex; align-items: center; border-bottom: 1px solid #e8e8e8; padding: 0 16px; }
+.logo { display: flex; align-items: center; gap: 6px; margin-right: 40px; cursor: pointer; }
+.logo .logo-icon { width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #6772e5, #4f5bd5); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+.logo .logo-text { font-weight: 700; font-size: 16px; color: #2d2d3a; }
+.top-tabs { display: flex; gap: 4px; flex: 1; }
+.top-tab { padding: 14px 18px; cursor: pointer; font-size: 14px; color: #555; border-bottom: 3px solid transparent; }
+.top-tab.active { color: #4f5bd5; font-weight: 600; border-bottom-color: #4f5bd5; }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.icon-btn { width: 34px; height: 34px; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 18px; color: #666; }
+.avatar-btn { width: 34px; height: 34px; border-radius: 50%; background: #6772e5; color: #fff; border: none; cursor: pointer; font-weight: 600; font-size: 14px; }
+
+.main-layout { display: flex; height: calc(100vh - 52px - 165px); }
+.sidebar { width: 240px; background: #fff; border-right: 1px solid #e8e8e8; padding: 16px 12px; overflow-y: auto; flex-shrink: 0; }
+.search-box { position: relative; margin-bottom: 16px; }
+.search-box input { width: 100%; padding: 9px 12px 9px 34px; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 14px; background: #f8f8f9; }
+.search-box .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #999; }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #444; margin-bottom: 2px; }
+.sidebar-item:hover { background: #f2f3f7; }
+.sidebar-divider { height: 1px; background: #ededf0; margin: 12px 4px; }
+.sidebar-section-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; padding: 8px 12px 6px; }
+.sidebar-bottom-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #444; margin-top: 8px; border-top: 1px solid #ededf0; padding-top: 14px; }
+
+.content { flex: 1; overflow-y: auto; padding: 28px 36px; }
+.page-title { font-size: 24px; font-weight: 700; color: #2d2d3a; margin-bottom: 4px; }
+.section-label { font-size: 14px; color: #6b7280; margin-bottom: 16px; }
+.category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.card { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; min-height: 120px; }
+.card:hover { border-color: #4f5bd5; box-shadow: 0 4px 16px rgba(79,91,213,0.08); transform: translateY(-2px); }
+.card .card-icon { width: 40px; height: 40px; border-radius: 8px; background: #eef0ff; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; font-size: 20px; color: #4f5bd5; }
+.card h3 { font-size: 15px; font-weight: 600; color: #2d2d3a; margin-bottom: 6px; }
+.card p { font-size: 13px; color: #6b7280; line-height: 1.4; }
+
+.breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; font-size: 13px; flex-wrap: wrap; }
+.breadcrumb-item { color: #4f5bd5; cursor: pointer; padding: 3px 6px; border-radius: 4px; }
+.breadcrumb-item:hover { background: #eef0ff; }
+.breadcrumb-item.current { color: #2d2d3a; font-weight: 600; cursor: default; }
+.breadcrumb-sep { color: #c0c0c8; }
+
+.form-container { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 32px; max-width: 860px; }
+.form-container h2 { font-size: 20px; font-weight: 700; color: #2d2d3a; margin-bottom: 24px; }
+.form-group { margin-bottom: 22px; }
+.form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #333; }
+.form-group .required { color: #d32f2f; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; background: #fff; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #4f5bd5; box-shadow: 0 0 0 3px rgba(79,91,213,0.12); }
+.form-group textarea { resize: vertical; min-height: 110px; }
+
+.btn { padding: 10px 22px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-primary { background: #4f5bd5; color: #fff; }
+.btn-primary:hover { background: #4250c0; }
+.btn-secondary { background: #f3f4f6; color: #555; border: 1px solid #d1d5db; }
+.btn-group { display: flex; gap: 12px; align-items: center; }
+.form-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+.checkbox-group { display: flex; align-items: center; gap: 10px; }
+.checkbox-group input { width: 18px; height: 18px; accent-color: #4f5bd5; }
+.checkbox-group label { font-size: 14px; color: #444; }
+
+.requests-container { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 24px; }
+.requests-container h2 { font-size: 20px; margin-bottom: 20px; }
+.requests-table { width: 100%; border-collapse: collapse; }
+.requests-table th { text-align: left; padding: 12px; background: #f9fafb; font-size: 12px; color: #6b7280; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+.requests-table td { padding: 14px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+.requests-table tr:hover { background: #f9fafb; }
+.requests-table .request-link { color: #4f5bd5; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.requests-table .request-link:hover { color: #4250c0; }
+.status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.status-new { background: #eef2ff; color: #4f5bd5; }
+
+/* Детальный просмотр заявки */
+.detail-container { background: #fff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 32px; max-width: 900px; }
+.detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 1px solid #f3f4f6; padding-bottom: 20px; }
+.detail-header h2 { font-size: 20px; font-weight: 700; color: #2d2d3a; margin-bottom: 6px; }
+.detail-number { font-size: 14px; color: #6b7280; display: flex; align-items: center; gap: 10px; }
+.detail-grid { display: grid; grid-template-columns: 220px 1fr; gap: 14px 16px; margin-bottom: 24px; }
+.detail-grid .field-label { font-size: 13px; color: #6b7280; font-weight: 600; padding-top: 2px; }
+.detail-grid .field-value { font-size: 14px; color: #374151; word-break: break-word; }
+.detail-section { margin-bottom: 24px; }
+.detail-section h3 { font-size: 15px; font-weight: 700; color: #2d2d3a; margin-bottom: 10px; }
+.detail-section .section-body { font-size: 14px; line-height: 1.6; color: #374151; padding: 14px 16px; background: #f9fafb; border-radius: 8px; }
+.detail-actions { display: flex; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #f3f4f6; }
+
+/* Экран результата */
+.result-screen { max-width: 760px; margin: 0 auto; }
+.result-screen h1 { font-size: 26px; margin-bottom: 12px; }
+.result-screen.correct h1 { color: #16a34a; }
+.result-screen.wrong h1 { color: #dc2626; }
+.result-summary { font-size: 15px; line-height: 1.6; padding: 20px; border-radius: 10px; margin-bottom: 24px; }
+.result-screen.correct .result-summary { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+.result-screen.wrong .result-summary { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; }
+.result-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 28px; }
+.result-item { display: flex; gap: 14px; padding: 16px 18px; background: #fff; border-radius: 10px; border: 1px solid #e8e8e8; }
+.result-item.ok { border-left: 5px solid #16a34a; }
+.result-item.fail { border-left: 5px solid #dc2626; background: #fffafa; }
+.result-item .icon { font-size: 22px; flex-shrink: 0; line-height: 1; }
+.result-item.ok .icon { color: #16a34a; }
+.result-item.fail .icon { color: #dc2626; }
+.result-item .body strong { display: block; font-size: 15px; margin-bottom: 4px; color: #2d2d3a; }
+.result-item .body span { font-size: 13.5px; color: #4b5563; line-height: 1.5; }
+.result-actions { display: flex; gap: 12px; }
+
+.toast { position: fixed; top: 80px; right: 20px; background: #2d2d3a; color: #fff; padding: 14px 22px; border-radius: 8px; font-size: 14px; opacity: 0; transform: translateX(100%); transition: all 0.3s; max-width: 380px; z-index: 1000; }
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.success { background: #15803d; }
+.toast.error { background: #dc2626; }
+.empty-state { text-align: center; padding: 48px 24px; color: #6b7280; }
+.empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="case-banner">
+    <div class="case-icon">📋</div>
+    <div class="case-content">
+        <div class="case-label">Задание для практики</div>
+        <div class="case-title">Создай заявку в Service Desk по обращению клиента</div>
+        <div class="case-text">
+            <strong>Ситуация:</strong> Клиент Иван Петров (WB ID: 25080462) не может оплатить тур. При попытке оплаты система выдаёт ошибку, деньги не списываются. Клиент прислал скриншот ошибки.
+        </div>
+        <div class="case-text">
+            <strong>Данные заказа:</strong> Номер бронирования: 30635. Номер бронирования провайдера (Fun&Sun): 12493074.
+        </div>
+        <div class="case-task">
+            <strong>Что сделать:</strong> пройди путь в Service Desk, выбери подходящую услугу и создай заявку. После создания получишь разбор: верно ли выбрана услуга и заполнены поля.
+        </div>
+    </div>
+</div>
+
+<div class="topbar">
+    <div class="logo" onclick="goHome()">
+        <div class="logo-icon">S</div>
+        <div class="logo-text">service desk</div>
+    </div>
+    <div class="top-tabs">
+        <div class="top-tab active" data-top="home" onclick="switchTopTab('home')">Главная</div>
+        <div class="top-tab" data-top="requests" onclick="switchTopTab('requests')">Заявки</div>
+        <div class="top-tab" data-top="tech" onclick="switchTopTab('tech')">Тех. работы</div>
+        <div class="top-tab" data-top="kanban" onclick="switchTopTab('kanban')">Канбан-доска</div>
+    </div>
+    <div class="top-actions">
+        <button class="icon-btn">🔔</button>
+        <button class="icon-btn">❓</button>
+        <button class="avatar-btn">ИП</button>
+    </div>
+</div>
+
+<div class="main-layout">
+    <div class="sidebar">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Найти">
+        </div>
+        <div class="sidebar-item"><span>♡</span><span>Избранное</span></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-title">Все категории</div>
+        <div class="sidebar-item"><span>💻</span><span>Рабочее место и ПО</span></div>
+        <div class="sidebar-item"><span>🖧</span><span>Инфраструктура</span></div>
+        <div class="sidebar-item"><span>W</span><span>WB Bank</span></div>
+        <div class="sidebar-item"><span>🛡️</span><span>Безопасность</span></div>
+        <div class="sidebar-item"><span>H</span><span>HR</span></div>
+        <div class="sidebar-item"><span>⛭</span><span>Портал поставщиков</span></div>
+        <div class="sidebar-bottom-item" onclick="renderHomeRoot()"><span>▦</span><span>Услуги по экземплярам</span></div>
+    </div>
+
+    <div class="content">
+        <div id="view-home">
+            <div id="breadcrumbBar" class="breadcrumb"></div>
+            <div class="category-header">
+                <div>
+                    <div class="page-title" id="pageTitle">Услуги по экземплярам</div>
+                    <div class="section-label" id="pageSubtitle">Тип</div>
+                </div>
+            </div>
+            <div class="cards-grid" id="cardsGrid"></div>
+        </div>
+
+        <div id="view-form" class="hidden">
+            <div id="formBreadcrumb" class="breadcrumb"></div>
+            <div class="form-container">
+                <h2 id="formTitle">Создание заявки</h2>
+                <div class="form-group">
+                    <label>Тема <span class="required">*</span></label>
+                    <input type="text" id="subject" placeholder="Например: Ошибка оплаты тура">
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea id="description" placeholder="Опишите проблему подробно..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>WB ID <span class="required">*</span></label>
+                    <input type="text" id="wbId" placeholder="Например: 25080462">
+                </div>
+                <div class="form-group">
+                    <label>Номер бронирования</label>
+                    <input type="text" id="bookingNumber" placeholder="Короткий ID или 0, если тура ещё нет">
+                </div>
+                <div class="form-group">
+                    <label>Номер бронирования провайдера</label>
+                    <input type="text" id="providerNumber" placeholder="Длинный номер в Fun&Sun или 0">
+                </div>
+                <div class="form-group">
+                    <label>Приоритет <span class="required">*</span></label>
+                    <select id="requestPriority">
+                        <option value="middle" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                        <option value="low">Низкий</option>
+                    </select>
+                </div>
+                <div class="form-actions-row">
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="createRequest()">Создать заявку</button>
+                        <button class="btn btn-secondary" onclick="goHome()">Отменить</button>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="keepOpen">
+                        <label for="keepOpen">Не закрывать форму после создания</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-result" class="hidden">
+            <div id="resultBreadcrumb" class="breadcrumb"></div>
+            <div class="result-screen" id="resultScreen">
+                <h1 id="resultHeading"></h1>
+                <div class="result-summary" id="resultSummary"></div>
+                <div class="result-list" id="resultList"></div>
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="goHome()">Пройти кейс заново</button>
+                    <button class="btn btn-secondary" onclick="switchTopTab('requests')">Мои заявки</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-requests" class="hidden">
+            <div class="requests-container">
+                <h2>Заявки</h2>
+                <table class="requests-table">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Тема</th>
+                            <th>Услуга</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requestsTableBody"></tbody>
+                </table>
+                <div id="emptyRequests" class="empty-state hidden">
+                    <div class="empty-icon">📭</div>
+                    <p>Нет созданных заявок</p>
+                    <p style="font-size:13px; color:#9ca3af; margin-top:6px;">Создай первую заявку на вкладке «Главная»</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-detail" class="hidden">
+            <div id="detailBreadcrumb" class="breadcrumb"></div>
+            <div class="detail-container">
+                <div class="detail-header">
+                    <div>
+                        <h2 id="detailTitle">Заявка</h2>
+                        <div class="detail-number">
+                            <span id="detailNumber">№ —</span>
+                            <span id="detailStatus" class="status-badge status-new">Новая</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-grid" id="detailGrid"></div>
+                <div class="detail-section">
+                    <h3>Описание</h3>
+                    <div class="section-body" id="detailDescription"></div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn btn-secondary" onclick="switchTopTab('requests')">← Назад к заявкам</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentService = '';
+let requests = [];
+let requestSequence = 1000;
+
+const CORRECT_ANSWER = {
+    service: 'Туры_Ошибка оплаты',
+    wbId: '25080462',
+    bookingNumber: '30635',
+    providerNumber: '12493074',
+    priority: ['middle', 'high']
+};
+
+const homeCards = [
+    { icon: '💻', title: 'Офис', desc: 'Заявки на организацию рабочего пространства' },
+    { icon: '🖥️', title: 'ИТ услуги', desc: 'Настройка ПО, устранение неполадок' },
+    { icon: '🏭', title: 'ИТ услуги для складских комплексов и СЦ', desc: 'Поддержка рабочих мест' },
+    { icon: '📋', title: 'Прочее', desc: 'Логистика, мероприятия, административные задачи', special: 'travel' }
+];
+
+const travelDeptCards = [
+    { icon: '🏢', title: 'Департамент клиентского сервиса и опыта', desc: 'Вопросы клиентского сервиса', sub: 'travel_dept' },
+    { icon: '📦', title: 'Департамент операций', desc: 'Операционные вопросы' },
+    { icon: '👥', title: 'Департамент персонала', desc: 'HR и кадровые вопросы' }
+];
+
+const travelServiceCards = [
+    { icon: '✈️', title: 'Travel — взаимодействие с техподдержкой', desc: 'Путешествия и поддержка клиентов', sub: 'travel_service' },
+    { icon: '📞', title: 'Поддержка клиентов', desc: 'Вопросы клиентов' },
+    { icon: '⭐', title: 'Опыт клиентов', desc: 'Оценка качества' }
+];
+
+const travelCategoryCards = [
+    { icon: '🏨', title: 'Отели_техподдержка', desc: 'Вопросы по отелям' },
+    { icon: '🧭', title: 'Туры_техподдержка', desc: 'Вопросы по турам', sub: 'tours_list' },
+    { icon: '✈️', title: 'Авиа_техподдержка', desc: 'Вопросы по авиабилетам' }
+];
+
+const toursServices = [
+    { title: 'Туры_Кэшбэк не начислен' },
+    { title: 'Туры_Тур не отображается в ЛК' },
+    { title: 'Туры_Оплата прошла, бронь не сформировалась' },
+    { title: 'Туры_Отмена кредита' },
+    { title: 'Туры_Ошибка на этапе брони (до оплаты)' },
+    { title: 'Туры_Ошибка оплаты' },
+    { title: 'Туры_Некорректный статус / некорректная информация по туру' },
+    { title: 'Туры_Другое' }
+];
+
+function showView(viewId) {
+    document.querySelectorAll('.content > div[id^="view-"]').forEach(v => v.classList.add('hidden'));
+    document.getElementById(viewId).classList.remove('hidden');
+}
+
+function switchTopTab(tab) {
+    document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+    const el = document.querySelector('.top-tab[data-top="' + tab + '"]');
+    if (el) el.classList.add('active');
+    if (tab === 'home') renderHomeRoot();
+    else if (tab === 'requests') { showView('view-requests'); renderRequests(); }
+    else {
+        showView('view-home');
+        document.getElementById('pageTitle').textContent = tab === 'tech' ? 'Тех. работы' : 'Канбан-доска';
+        document.getElementById('pageSubtitle').textContent = '';
+        document.getElementById('cardsGrid').innerHTML = '';
+        document.getElementById('breadcrumbBar').innerHTML = '';
+    }
+}
+
+function goHome() { switchTopTab('home'); }
+
+function buildBreadcrumb(items, containerId) {
+    const bc = document.getElementById(containerId || 'breadcrumbBar');
+    bc.innerHTML = '';
+    items.forEach((item, idx) => {
+        if (idx > 0) {
+            const sep = document.createElement('span');
+            sep.className = 'breadcrumb-sep';
+            sep.textContent = '›';
+            bc.appendChild(sep);
+        }
+        const crumb = document.createElement('span');
+        if (idx === items.length - 1) {
+            crumb.className = 'breadcrumb-item current';
+            crumb.textContent = item.label;
+        } else {
+            crumb.className = 'breadcrumb-item';
+            crumb.textContent = item.label;
+            if (item.action) crumb.onclick = item.action;
+        }
+        bc.appendChild(crumb);
+    });
+}
+
+function renderHomeRoot() {
+    showView('view-home');
+    document.getElementById('pageTitle').textContent = 'Услуги по экземплярам';
+    document.getElementById('pageSubtitle').textContent = 'Тип';
+    buildBreadcrumb([{ label: 'Услуги по экземплярам' }]);
+    renderCards(homeCards);
+}
+
+function renderCards(cards) {
+    const grid = document.getElementById('cardsGrid');
+    grid.innerHTML = '';
+    cards.forEach(card => {
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.innerHTML = '<div class="card-icon">' + card.icon + '</div><div><h3>' + card.title + '</h3><p>' + card.desc + '</p></div>';
+        if (card.special === 'travel') el.onclick = showTravelDept;
+        else if (card.sub === 'travel_dept') el.onclick = showTravelService;
+        else if (card.sub === 'travel_service') el.onclick = showTravelCategory;
+        else if (card.sub === 'tours_list') el.onclick = showToursServices;
+        else if (card.service) el.onclick = function() { openForm(card.service); };
+        else el.onclick = function() { showToast('Эта функция недоступна в тренажёре'); };
+        grid.appendChild(el);
+    });
+}
+
+function showTravelDept() {
+    showView('view-home');
+    document.getElementById('pageTitle').textContent = 'Прочее';
+    document.getElementById('pageSubtitle').textContent = 'Департаменты';
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Прочее' }
+    ]);
+    renderCards(travelDeptCards);
+}
+
+function showTravelService() {
+    showView('view-home');
+    document.getElementById('pageTitle').textContent = 'Департамент клиентского сервиса и опыта';
+    document.getElementById('pageSubtitle').textContent = 'Разделы';
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Прочее', action: showTravelDept },
+        { label: 'Департамент клиентского сервиса и опыта' }
+    ]);
+    renderCards(travelServiceCards);
+}
+
+function showTravelCategory() {
+    showView('view-home');
+    document.getElementById('pageTitle').textContent = 'Travel — взаимодействие с техподдержкой';
+    document.getElementById('pageSubtitle').textContent = 'Раздел услуг';
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Прочее', action: showTravelDept },
+        { label: 'Департамент клиентского сервиса и опыта', action: showTravelService },
+        { label: 'Travel — взаимодействие с техподдержкой' }
+    ]);
+    renderCards(travelCategoryCards);
+}
+
+function showToursServices() {
+    showView('view-home');
+    document.getElementById('pageTitle').textContent = 'Туры_техподдержка';
+    document.getElementById('pageSubtitle').textContent = 'Услуги';
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Прочее', action: showTravelDept },
+        { label: 'Департамент клиентского сервиса и опыта', action: showTravelService },
+        { label: 'Travel — взаимодействие с техподдержкой', action: showTravelCategory },
+        { label: 'Туры_техподдержка' }
+    ]);
+    const services = toursServices.map(s => ({
+        icon: '📄',
+        title: s.title,
+        desc: '',
+        service: s.title
+    }));
+    renderCards(services);
+}
+
+function openForm(serviceName) {
+    currentService = serviceName;
+    document.getElementById('formTitle').textContent = serviceName;
+    showView('view-form');
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Прочее', action: showTravelDept },
+        { label: 'Департамент клиентского сервиса и опыта', action: showTravelService },
+        { label: 'Travel — взаимодействие с техподдержкой', action: showTravelCategory },
+        { label: 'Туры_техподдержка', action: showToursServices },
+        { label: serviceName }
+    ], 'formBreadcrumb');
+}
+
+function createRequest() {
+    const subject = document.getElementById('subject').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const wbId = document.getElementById('wbId').value.trim();
+    const bookingNumber = document.getElementById('bookingNumber').value.trim();
+    const providerNumber = document.getElementById('providerNumber').value.trim();
+    const priority = document.getElementById('requestPriority').value;
+
+    if (!subject) { showToast('Заполните тему', 'error'); return; }
+    if (!wbId) { showToast('Заполните WB ID', 'error'); return; }
+
+    const now = Date.now();
+    const newRequest = {
+        id: ++requestSequence,
+        number: 'REQ-' + String(requestSequence).padStart(4, '0'),
+        subject, service: currentService, description, wbId, bookingNumber, providerNumber,
+        priority, status: 'Новая', createdDate: now
+    };
+    requests.unshift(newRequest);
+
+    const check = validateAnswer(newRequest);
+
+    document.getElementById('subject').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('wbId').value = '';
+    document.getElementById('bookingNumber').value = '';
+    document.getElementById('providerNumber').value = '';
+    document.getElementById('requestPriority').value = 'middle';
+
+    renderResultPage(check, newRequest);
+}
+
+function validateAnswer(req) {
+    const checks = [];
+
+    const serviceOk = req.service === CORRECT_ANSWER.service;
+    checks.push({
+        ok: serviceOk,
+        title: 'Услуга',
+        detail: serviceOk
+            ? 'Выбрана «Туры_Ошибка оплаты» — верно.'
+            : 'Выбрано: «' + req.service + '». Правильно: «Туры_Ошибка оплаты». В кейсе клиент не может оплатить тур — это именно ошибка оплаты, а не ошибка брони или ситуация «оплата прошла без брони».'
+    });
+
+    const wbOk = req.wbId === CORRECT_ANSWER.wbId;
+    checks.push({
+        ok: wbOk,
+        title: 'WB ID',
+        detail: wbOk ? 'WB ID указан верно.' : 'Указано: «' + req.wbId + '». Правильно: «' + CORRECT_ANSWER.wbId + '».'
+    });
+
+    const bookingOk = req.bookingNumber === CORRECT_ANSWER.bookingNumber;
+    checks.push({
+        ok: bookingOk,
+        title: 'Номер бронирования',
+        detail: bookingOk ? 'Номер бронирования указан верно.' : 'Указано: «' + req.bookingNumber + '». Правильно: «' + CORRECT_ANSWER.bookingNumber + '». Если бы тура ещё не было, можно было поставить 0 или *.'
+    });
+
+    const providerOk = req.providerNumber === CORRECT_ANSWER.providerNumber;
+    checks.push({
+        ok: providerOk,
+        title: 'Номер бронирования провайдера',
+        detail: providerOk ? 'Номер в Fun&Sun указан верно.' : 'Указано: «' + req.providerNumber + '». Правильно: «' + CORRECT_ANSWER.providerNumber + '».'
+    });
+
+    const priorityOk = CORRECT_ANSWER.priority.includes(req.priority);
+    const priorityLabels = { high: 'Высокий', middle: 'Средний', low: 'Низкий' };
+    checks.push({
+        ok: priorityOk,
+        title: 'Приоритет',
+        detail: priorityOk
+            ? 'Приоритет указан корректно.'
+            : 'Указано: «' + (priorityLabels[req.priority] || req.priority) + '». Для ошибки оплаты допустим «Средний» или «Высокий». «Низкий» здесь не подходит.'
+    });
+
+    const descOk = req.description.length > 10;
+    checks.push({
+        ok: descOk,
+        title: 'Описание',
+        detail: descOk ? 'Описание заполнено.' : 'Описание слишком короткое или пустое. Опиши, что именно не работает: клиент не может оплатить, платёж не проходит, выдаёт ошибку.'
+    });
+
+    const allOk = checks.every(c => c.ok);
+    return { allOk, checks };
+}
+
+function renderResultPage(result, req) {
+    showView('view-result');
+    buildBreadcrumb([
+        { label: 'Услуги по экземплярам', action: renderHomeRoot },
+        { label: 'Результат проверки' }
+    ], 'resultBreadcrumb');
+
+    const screen = document.getElementById('resultScreen');
+    screen.classList.remove('correct', 'wrong');
+    screen.classList.add(result.allOk ? 'correct' : 'wrong');
+
+    document.getElementById('resultHeading').textContent = result.allOk
+        ? '✅ Верно! Заявка создана правильно'
+        : '❌ Есть ошибки. Разбери и попробуй ещё раз';
+
+    document.getElementById('resultSummary').innerHTML = result.allOk
+        ? '<strong>Заявка ' + req.number + ' создана правильно.</strong><br>Услуга выбрана верно, все поля заполнены. Такую заявку можно отправлять в техподдержку.'
+        : '<strong>Заявка ' + req.number + ' создана, но есть ошибки.</strong><br>Разбери их ниже — и попробуй пройти кейс заново. Так ты закрепишь алгоритм.';
+
+    const list = document.getElementById('resultList');
+    list.innerHTML = '';
+    result.checks.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'result-item ' + (c.ok ? 'ok' : 'fail');
+        item.innerHTML = '<div class="icon">' + (c.ok ? '✓' : '✕') + '</div>'
+            + '<div class="body"><strong>' + c.title + '</strong><span>' + c.detail + '</span></div>';
+        list.appendChild(item);
+    });
+}
+
+function renderRequests() {
+    showView('view-requests');
+    const tbody = document.getElementById('requestsTableBody');
+    const emptyDiv = document.getElementById('emptyRequests');
+    if (requests.length === 0) {
+        tbody.innerHTML = '';
+        emptyDiv.classList.remove('hidden');
+        return;
+    }
+    emptyDiv.classList.add('hidden');
+    tbody.innerHTML = '';
+    requests.forEach(req => {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td><span class="request-link" onclick="openRequestDetail(' + req.id + ')">' + req.number + '</span></td>'
+            + '<td>' + req.subject + '</td>'
+            + '<td>' + req.service + '</td>'
+            + '<td><span class="status-badge status-new">' + req.status + '</span></td>';
+        tbody.appendChild(row);
+    });
+}
+
+function openRequestDetail(id) {
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+
+    showView('view-detail');
+    buildBreadcrumb([
+        { label: 'Заявки', action: () => switchTopTab('requests') },
+        { label: req.number }
+    ], 'detailBreadcrumb');
+
+    document.getElementById('detailTitle').textContent = req.subject;
+    document.getElementById('detailNumber').textContent = '№ ' + req.number;
+    document.getElementById('detailStatus').textContent = req.status;
+    document.getElementById('detailDescription').textContent = req.description || '— не заполнено —';
+
+    const priorityLabels = { high: 'Высокий', middle: 'Средний', low: 'Низкий' };
+    const formatDate = (ts) => {
+        const d = new Date(ts);
+        return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    };
+
+    const grid = document.getElementById('detailGrid');
+    grid.innerHTML = ''
+        + '<div class="field-label">Услуга</div><div class="field-value">' + req.service + '</div>'
+        + '<div class="field-label">Приоритет</div><div class="field-value">' + (priorityLabels[req.priority] || req.priority) + '</div>'
+        + '<div class="field-label">WB ID клиента</div><div class="field-value">' + (req.wbId || '—') + '</div>'
+        + '<div class="field-label">Номер бронирования</div><div class="field-value">' + (req.bookingNumber || '—') + '</div>'
+        + '<div class="field-label">Номер бронирования провайдера</div><div class="field-value">' + (req.providerNumber || '—') + '</div>'
+        + '<div class="field-label">Дата создания</div><div class="field-value">' + formatDate(req.createdDate) + '</div>';
+}
+
+function showToast(message, type) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast show' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+renderHomeRoot();
+</script>
+</body>
+</html>
